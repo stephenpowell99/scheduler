@@ -651,13 +651,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   private getWeekStart(date: Date): string {
-    const weekStart = new Date(date);
+    // Always treat as local time
+    const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const day = weekStart.getDay();
     // Adjust for Monday as start of week (day 0 = Sunday, day 1 = Monday)
     const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
     weekStart.setDate(diff);
     weekStart.setHours(0, 0, 0, 0);
-    return weekStart.toISOString().split("T")[0];
+    // Format as YYYY-MM-DD in local time
+    const yyyy = weekStart.getFullYear();
+    const mm = String(weekStart.getMonth() + 1).padStart(2, '0');
+    const dd = String(weekStart.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   private addBusinessDays(startDate: Date, businessDays: number): Date {
