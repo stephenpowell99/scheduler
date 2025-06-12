@@ -3,7 +3,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,22 +37,10 @@ export default function Login() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
-      const formData = new URLSearchParams();
-      formData.append('username', data.username);
-      formData.append('password', data.password);
-      
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData,
-      });
-      
+      const response = await apiRequest("POST", "/api/auth/login", data);
       if (!response.ok) {
-        throw new Error('Invalid credentials');
+        throw new Error("Invalid credentials");
       }
-      
       return response.json();
     },
     onSuccess: () => {
@@ -104,7 +98,9 @@ export default function Login() {
                   className="mt-1"
                 />
                 {errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.username.message}
+                  </p>
                 )}
               </div>
 
@@ -118,7 +114,9 @@ export default function Login() {
                   className="mt-1"
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
 
@@ -127,7 +125,9 @@ export default function Login() {
                 className="w-full"
                 disabled={isLoading || loginMutation.isPending}
               >
-                {isLoading || loginMutation.isPending ? "Signing in..." : "Sign In"}
+                {isLoading || loginMutation.isPending
+                  ? "Signing in..."
+                  : "Sign In"}
               </Button>
             </form>
 
