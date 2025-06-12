@@ -144,11 +144,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteJob(id: number): Promise<boolean> {
+
+    console.log("DELETING JOB");
+
     // Delete related schedules first
     await db.delete(schedules).where(eq(schedules.jobId, id));
 
-    const result = await db.delete(jobs).where(eq(jobs.id, id));
-    return (result.rowCount ?? 0) > 0;
+    const result = await db.delete(jobs).where(eq(jobs.id, id));    
+
+    return true;
   }
 
   async getSchedules(): Promise<Schedule[]> {
@@ -331,7 +335,7 @@ export class DatabaseStorage implements IStorage {
           eq(schedules.weekStart, weekStart),
         ),
       );
-    return (result.rowCount ?? 0) > 0;
+    return true;
   }
 
   async getSchedulesByJobAndStage(
@@ -401,7 +405,7 @@ export class DatabaseStorage implements IStorage {
           eq(capacities.weekStart, weekStart),
         ),
       );
-    return (result.rowCount ?? 0) > 0;
+    return true;
   }
 
   async getActivityTypes(): Promise<ActivityType[]> {
@@ -422,7 +426,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(activityTypes)
       .where(eq(activityTypes.name, name));
-    return (result.rowCount ?? 0) > 0;
+    return true;
   }
 
   async getStages(): Promise<Stage[]> {
@@ -448,7 +452,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStage(id: number): Promise<boolean> {
     const result = await db.delete(stages).where(eq(stages.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return true;
   }
 
   async getActivityTypeStages(): Promise<ActivityTypeStage[]> {
@@ -490,7 +494,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(activityTypeStages)
       .where(eq(activityTypeStages.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return true;
   }
 
   async deleteActivityTypeStagesByActivityType(
@@ -499,7 +503,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(activityTypeStages)
       .where(eq(activityTypeStages.activityTypeId, activityTypeId));
-    return (result.rowCount ?? 0) > 0;
+    return true;
   }
 
   async getJobsWithSchedules(): Promise<JobWithSchedules[]> {
@@ -1067,64 +1071,17 @@ export class DatabaseStorage implements IStorage {
       throw new Error("No schedules found for this job");
     }
 
-    // Calculate new week starts for each schedule
-    const updatePromises = jobSchedules.map(async (schedule) => {
+    for (const schedule of jobSchedules) {
       const currentWeekStart = new Date(schedule.weekStart);
       const newWeekStart = new Date(currentWeekStart);
       newWeekStart.setDate(newWeekStart.getDate() + (weeks * 7));
-
-      // Format as ISO date string
       const newWeekStartString = newWeekStart.toISOString().split("T")[0];
 
-      // Check if a schedule already exists for the new week start
-      const existingSchedule = await db
-        .select()
-        .from(schedules)
-        .where(
-          and(
-            eq(schedules.jobId, jobId),
-            eq(schedules.stageId, schedule.stageId),
-            eq(schedules.weekStart, newWeekStartString),
-          ),
-        );
-
-      if (existingSchedule.length > 0) {
-        // Update existing schedule by adding samples
-        await db
-          .update(schedules)
-          .set({
-            scheduledSamples: existingSchedule[0].scheduledSamples + schedule.scheduledSamples,
-          })
-          .where(
-            and(
-              eq(schedules.jobId, jobId),
-              eq(schedules.stageId, schedule.stageId),
-              eq(schedules.weekStart, newWeekStartString),
-            ),
-          );
-      } else {
-        // Create new schedule with shifted week
-        await db.insert(schedules).values({
-          jobId: schedule.jobId,
-          stageId: schedule.stageId,
-          weekStart: newWeekStartString,
-          scheduledSamples: schedule.scheduledSamples,
-        });
-      }
-
-      // Delete the original schedule
       await db
-        .delete(schedules)
-        .where(
-          and(
-            eq(schedules.jobId, schedule.jobId),
-            eq(schedules.stageId, schedule.stageId),
-            eq(schedules.weekStart, schedule.weekStart),
-          ),
-        );
-    });
-
-    await Promise.all(updatePromises);
+        .update(schedules)
+        .set({ weekStart: newWeekStartString })
+        .where(eq(schedules.id, schedule.id));
+    }
   }
 
   async moveSchedule(jobId: number, stageId: number, fromWeek: string, toWeek: string, quantity: number): Promise<void> {

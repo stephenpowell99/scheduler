@@ -103,6 +103,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/jobs/:id", async (req, res) => {
+
+    console.log("ABOUT TO DELETE JOB");
+
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteJob(id);
