@@ -1,0 +1,32 @@
+We now need to implement the auto-plan functionality. Here are the main points:
+* When a user creates a job, they can choose to auto-plan it
+* The auto-plan will try to plan the job based on the start date entered. It will NOT constrain the plan by the end date
+* The auto-plan will NOT be constrained by the capacity limitations
+* Here are the rules for the auto planning:
+- The point of the plan is to schedule the entire quantity through all stages related to the Job's activity type, and in Stage order
+- The software will iteratively create the plan for specific days (while calculating) and then drop those quantities in the respective weeks
+- The Processing Time of the stage for the job's activity type will determine how many days the scheduled quantity needs to stay in that stage before being scheduled for the next stage
+- If the Processing Time of a stage is zero, then the next stage can be scheduled at the same time
+- If a stage has a Hold Quantity value, then this means a maximum of that quantity of the job can be scheduled for that stage and all subsequent stages up to and including the Release Stage. When that quantity has been scheduled for the Release Stage, on that date, the rest of the quantity can be scheduled for the stage where the Hold Quantity was defined.
+
+To illustrate this, here is an example where 
+* a job has a Quantity of 15
+* all stages have a Processing Time of 7 days for the activity type of the job
+* we have a 5 stage process 
+* Stage 2 has a Hold Quantity of 2 and a Release Stage of Stage 4
+
+When auto-planning the job for this example: 
+* all 15 would be scheduled for Stage 1 in Week 1
+* 2 would then be scheduled for Stage 2 for Week 2 (due to Processing Time for Stage 1 being 7 days, and the Hold Quantity being 2 for Stage 2)
+* 2 would then be scheduled for Stage 3 for Week 3 (due to Processing Time for Stage 2 being 7 days, and  the Release Stage of stage 4 has not been scheduled yet)
+* 2 would then be scheduled for Stage 4 for Week 4 
+* 13 would then be scheduled for Stage 2 for Week 4 (ie the remaining qty can now be scheduled for Stage 2 as the original 2 have now been scheduled for the Release Stage of Stage 4
+* 2 would be scheduled for Stage 5 for Week 5 (as that is the next stage for the 2 currently in Stage 4)
+* 13 would be scheduled for Stage 3 for Week 5 (as that is the next stage for the 13 currently in Stage 2)
+* 13 would be scheduled for Stage 4 for Week 6 (as that is the next stage for the 13 currently in Stage 3)
+* 13 would be scheduled for Stage 5 for Week 7 (as that is the next stage for the 13 currently in Stage 4)
+
+Attached is a spreadsheet with the Example Stage Structure and the Example Plan.
+
+Can you confirm you understand the logic before playing this back to me.
+
